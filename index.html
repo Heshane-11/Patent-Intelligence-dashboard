@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Global Patent Intelligence Dashboard — Analyze patent trends, geographic distribution, and innovation scores inspired by WIPO, OECD, and USPTO analytics platforms.">
+  <meta name="theme-color" content="#2563eb">
+  <title>Global Patent Intelligence Dashboard — WIPO Analytics</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232563eb'/><text y='.9em' font-size='70' x='12'>⚙</text></svg>">
+  <link rel="stylesheet" href="css/style.css">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Export Tools -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+  <!-- ==========================================================================
+       Sidebar Navigation Panel
+       ========================================================================== -->
+  <aside class="sidebar" id="sidebar" role="navigation" aria-label="Main Navigation">
+    <div class="sidebar-brand">
+      <div class="sidebar-logo">
+        <i class="fa-solid fa-compass-drafting"></i>
+      </div>
+      <div>
+        <h1 class="brand-text">PATENT INTEL</h1>
+        <p class="brand-subtitle">WIPO Analytics</p>
+      </div>
+    </div>
+    
+    <ul class="sidebar-menu">
+      <li class="menu-item active" data-tab="overview">
+        <a href="#overview"><i class="fa-solid fa-chart-pie"></i><span>Executive Overview</span></a>
+      </li>
+      <li class="menu-item" data-tab="trends">
+        <a href="#trends"><i class="fa-solid fa-chart-line"></i><span>Innovation Trends</span></a>
+      </li>
+      <li class="menu-item" data-tab="geographic">
+        <a href="#geographic"><i class="fa-solid fa-earth-americas"></i><span>Geographic Intel</span></a>
+      </li>
+      <li class="menu-item" data-tab="applicants">
+        <a href="#applicants"><i class="fa-solid fa-building-columns"></i><span>Applicant Intel</span></a>
+      </li>
+      <li class="menu-item" data-tab="technology">
+        <a href="#technology"><i class="fa-solid fa-microchip"></i><span>Technology Intel</span></a>
+      </li>
+    </ul>
+
+    <div class="sidebar-footer">
+      <button class="theme-toggle-btn" id="themeToggleBtn">
+        <i class="fa-solid fa-moon"></i>
+        <span>Dark Mode</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ==========================================================================
+       Main Dashboard Frame
+       ========================================================================== -->
+  <div class="main-wrapper" id="captureArea">
+    
+    <!-- Top Action bar -->
+    <header class="top-nav" role="banner">
+      <div style="display: flex; align-items: center; gap: 16px;">
+        <button class="mobile-nav-toggle" id="mobileNavToggle">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <div class="nav-search-bar">
+          <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+          <input type="text" id="globalSearch" placeholder="Search patents, applicants, categories..." aria-label="Search patents, applicants, and categories" autocomplete="off">
+        </div>
+      </div>
+      
+      <div class="nav-actions">
+        <button class="action-btn" id="openReportBtn">
+          <i class="fa-solid fa-file-invoice"></i> Executive Report
+        </button>
+        <button class="action-btn" id="exportCsvBtn">
+          <i class="fa-solid fa-file-csv"></i> Export CSV
+        </button>
+        <button class="action-btn btn-primary" id="exportPdfBtn">
+          <i class="fa-solid fa-file-pdf"></i> PDF Report
+        </button>
+      </div>
+    </header>
+
+    <!-- Filters Section -->
+    <section class="filter-panel">
+      <!-- Country Filter -->
+      <div class="filter-group">
+        <label>Country</label>
+        <div class="custom-select-wrapper" id="countryFilter">
+          <div class="custom-select-trigger">
+            <span>All Countries</span> <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="custom-select-options" id="countryOptions"></div>
+        </div>
+      </div>
+
+      <!-- Applicant Filter -->
+      <div class="filter-group">
+        <label>Applicant</label>
+        <div class="custom-select-wrapper" id="applicantFilter">
+          <div class="custom-select-trigger">
+            <span>All Applicants</span> <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="custom-select-options" id="applicantOptions"></div>
+        </div>
+      </div>
+
+      <!-- Tech Domain Filter -->
+      <div class="filter-group">
+        <label>Technology</label>
+        <div class="custom-select-wrapper" id="techFilter">
+          <div class="custom-select-trigger">
+            <span>All Technologies</span> <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="custom-select-options" id="techOptions"></div>
+        </div>
+      </div>
+
+      <!-- Patent Status Filter -->
+      <div class="filter-group">
+        <label>Status</label>
+        <div class="custom-select-wrapper" id="statusFilter">
+          <div class="custom-select-trigger">
+            <span>All Statuses</span> <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="custom-select-options" id="statusOptions"></div>
+        </div>
+      </div>
+
+      <!-- Year Range Filter -->
+      <div class="filter-group">
+        <label>Filing Years</label>
+        <div class="year-range-inputs">
+          <input type="number" id="yearStart" class="year-input" min="2015" max="2025" value="2015">
+          <span style="color: var(--text-muted);">to</span>
+          <input type="number" id="yearEnd" class="year-input" min="2015" max="2025" value="2025">
+        </div>
+      </div>
+
+      <!-- Clear filters -->
+      <button class="reset-filters-btn" id="resetFiltersBtn">
+        <i class="fa-solid fa-arrow-rotate-left"></i> Reset Filters
+      </button>
+    </section>
+
+    <!-- Upgraded: Filter Pills Row -->
+    <div class="filter-pills-row" id="filterPillsRow" style="display: none;"></div>
+
+    <!-- Main Content Tab Views -->
+    <main class="dashboard-content">
+      
+      <!-- Skeletons Overlay (Loaded dynamically) -->
+      <div id="loadingSkeleton" style="display: none;">
+        <div class="kpi-container">
+          <div class="kpi-card skeleton"><div class="skeleton-text"></div></div>
+          <div class="kpi-card skeleton"><div class="skeleton-text"></div></div>
+          <div class="kpi-card skeleton"><div class="skeleton-text"></div></div>
+          <div class="kpi-card skeleton"><div class="skeleton-text"></div></div>
+        </div>
+        <div class="widget-grid">
+          <div class="widget skeleton"><div class="skeleton-title"></div><div class="skeleton-chart"></div></div>
+          <div class="widget skeleton"><div class="skeleton-title"></div><div class="skeleton-chart"></div></div>
+        </div>
+      </div>
+
+      <div id="tabViews">
+        <!-- ==========================================
+             TAB 1: Executive Overview
+             ========================================== -->
+        <div class="tab-content active" id="overviewTab">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">Executive Analytics</h2>
+              <p class="page-subtitle">Global patent filing trends, activity summaries, and real-time WIPO insights.</p>
+            </div>
+          </div>
+
+          <!-- Advanced KPIs Grid -->
+          <div class="kpi-container">
+            <!-- Total Patents -->
+            <div class="kpi-card blue">
+              <div class="kpi-icon"><i class="fa-solid fa-folder-open"></i></div>
+              <div class="kpi-title">Total Patents</div>
+              <div class="kpi-value counter" id="kpiTotalPatents">0</div>
+              <div class="kpi-change positive" id="kpiTotalPatentsChange">
+                <i class="fa-solid fa-arrow-up"></i> <span>--</span>
+              </div>
+            </div>
+
+            <!-- Active Patents -->
+            <div class="kpi-card teal">
+              <div class="kpi-icon"><i class="fa-solid fa-circle-check"></i></div>
+              <div class="kpi-title">Active Patents</div>
+              <div class="kpi-value counter" id="kpiActivePatents">0</div>
+              <div class="kpi-change neutral" id="kpiActivePatentsPct">
+                <span>--</span> of total
+              </div>
+            </div>
+
+            <!-- Total Citations -->
+            <div class="kpi-card orange">
+              <div class="kpi-icon"><i class="fa-solid fa-quote-right"></i></div>
+              <div class="kpi-title">Total Citations</div>
+              <div class="kpi-value counter" id="kpiTotalCitations">0</div>
+              <div class="kpi-change positive" id="kpiAvgCitations">
+                <span>--</span> avg citations
+              </div>
+            </div>
+
+            <!-- Most Active Country -->
+            <div class="kpi-card pink">
+              <div class="kpi-icon"><i class="fa-solid fa-earth-asia"></i></div>
+              <div class="kpi-title">Most Active Country</div>
+              <div class="kpi-value" style="font-size: 1.4rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="kpiMostActiveCountry">--</div>
+              <div class="kpi-change neutral">Top filer region</div>
+            </div>
+
+            <!-- Fastest Growing Domain -->
+            <div class="kpi-card teal">
+              <div class="kpi-icon"><i class="fa-solid fa-bolt"></i></div>
+              <div class="kpi-title">Fastest Growing</div>
+              <div class="kpi-value" style="font-size: 1.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="kpiFastestGrowing">--</div>
+              <div class="kpi-change positive">Accelerating domain</div>
+            </div>
+
+            <!-- Highest Impact Applicant -->
+            <div class="kpi-card orange">
+              <div class="kpi-icon"><i class="fa-solid fa-crown"></i></div>
+              <div class="kpi-title">Highest Impact</div>
+              <div class="kpi-value" style="font-size: 1.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="kpiHighestImpact">--</div>
+              <div class="kpi-change positive">Max average citation</div>
+            </div>
+
+            <!-- Innovation Leader -->
+            <div class="kpi-card blue">
+              <div class="kpi-icon"><i class="fa-solid fa-star"></i></div>
+              <div class="kpi-title">Innovation Leader</div>
+              <div class="kpi-value" style="font-size: 1.2rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="kpiInnovationLeader">--</div>
+              <div class="kpi-change positive">Top Innovation Score</div>
+            </div>
+          </div>
+
+          <!-- AI Insights Panel -->
+          <div class="insights-card" style="margin-bottom: 32px;">
+            <div class="insights-header">
+              <h3><i class="fa-solid fa-wand-magic-sparkles"></i> AI Patent Intelligence & Key Findings</h3>
+              <span class="badge badge-published">Active Engine</span>
+            </div>
+            <div class="insights-list" id="aiInsightsList"></div>
+          </div>
+
+          <!-- Overview charts grid -->
+          <div class="widget-grid">
+            <div class="widget">
+              <div class="widget-header">
+                <div>
+                  <h3 class="widget-title">Patent Filings by Year</h3>
+                  <p class="widget-subtitle">Global activity mapping (2015 - 2025)</p>
+                </div>
+                <div class="widget-actions">
+                  <button class="widget-action-btn" onclick="ChartManager.exportChartAsPNG('execFilingTrends')"><i class="fa-solid fa-download"></i></button>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas id="execFilingTrends"></canvas>
+              </div>
+            </div>
+
+            <div class="widget">
+              <div class="widget-header">
+                <div>
+                  <h3 class="widget-title">Country Filing Share</h3>
+                  <p class="widget-subtitle">Top patent filing nations</p>
+                </div>
+                <div class="widget-actions">
+                  <button class="widget-action-btn" onclick="ChartManager.exportChartAsPNG('execCountryDist')"><i class="fa-solid fa-download"></i></button>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas id="execCountryDist"></canvas>
+              </div>
+            </div>
+
+            <div class="widget">
+              <div class="widget-header">
+                <div>
+                  <h3 class="widget-title">Technology Domain Share</h3>
+                  <p class="widget-subtitle">Sub-classification filings footprint</p>
+                </div>
+                <div class="widget-actions">
+                  <button class="widget-action-btn" onclick="ChartManager.exportChartAsPNG('execDomainDist')"><i class="fa-solid fa-download"></i></button>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas id="execDomainDist"></canvas>
+              </div>
+            </div>
+
+            <div class="widget">
+              <div class="widget-header">
+                <div>
+                  <h3 class="widget-title">Patent Lifecycle Status</h3>
+                  <p class="widget-subtitle">Portfolio breakdown by status</p>
+                </div>
+                <div class="widget-actions">
+                  <button class="widget-action-btn" onclick="ChartManager.exportChartAsPNG('execStatusBreakdown')"><i class="fa-solid fa-download"></i></button>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas id="execStatusBreakdown"></canvas>
+              </div>
+            </div>
+
+            <div class="widget widget-full">
+              <div class="widget-header">
+                <div>
+                  <h3 class="widget-title">Top Major Applicants</h3>
+                  <p class="widget-subtitle">Filings leaderboards</p>
+                </div>
+                <div class="widget-actions">
+                  <button class="widget-action-btn" onclick="ChartManager.exportChartAsPNG('execTopApplicants')"><i class="fa-solid fa-download"></i></button>
+                </div>
+              </div>
+              <div class="chart-container" style="height: 200px;">
+                <canvas id="execTopApplicants"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==========================================
+             TAB 2: Innovation Trends
+             ========================================== -->
+        <div class="tab-content" id="trendsTab">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">Innovation Trends</h2>
+              <p class="page-subtitle">Growth rates, YoY patterns, and emerging technologies over the last decade.</p>
+            </div>
+          </div>
+
+          <div class="widget-grid">
+            <div class="widget widget-full">
+              <div class="widget-header">
+                <div>
+                  <h3 class="widget-title">Technology Domain Growth (2015-2025)</h3>
+                  <p class="widget-subtitle">Comparison of technology development pipelines</p>
+                </div>
+                <div class="widget-actions">
+                  <button class="widget-action-btn" onclick="ChartManager.exportChartAsPNG('trendTechDomainGrowth')"><i class="fa-solid fa-download"></i></button>
+                </div>
+              </div>
+              <div class="chart-container" style="height: 320px;">
+                <canvas id="trendTechDomainGrowth"></canvas>
+              </div>
+            </div>
+
+            <div class="widget widget-full">
+              <div class="widget-header">
+                <div>
+                  <h3 class="widget-title">Year-over-Year Growth Rate %</h3>
+                  <p class="widget-subtitle">Accelerations and decelerations of global patent publications</p>
+                </div>
+                <div class="widget-actions">
+                  <button class="widget-action-btn" onclick="ChartManager.exportChartAsPNG('trendYoYGrowth')"><i class="fa-solid fa-download"></i></button>
+                </div>
+              </div>
+              <div class="chart-container" style="height: 280px;">
+                <canvas id="trendYoYGrowth"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==========================================
+             TAB 3: Geographic Intelligence (UPGRADED with Compare Mode)
+             ========================================== -->
+        <div class="tab-content" id="geographicTab">
+          <div class="page-header" style="margin-bottom: 16px;">
+            <div>
+              <h2 class="page-title">Geographic Intelligence</h2>
+              <p class="page-subtitle">Geographical concentration, citation analysis, and regional innovation comparisons.</p>
+            </div>
+          </div>
+
+          <!-- Segmented Page toggle -->
+          <div class="tab-toggle-container">
+            <button class="tab-toggle-btn active" id="geoToggleRankings">National Rankings</button>
+            <button class="tab-toggle-btn" id="geoToggleCompare">Country Comparison Mode</button>
+          </div>
+
+          <!-- View 1: Default Rankings -->
+          <div id="geoRankingsView">
+            <div class="widget-grid">
+              <div class="widget">
+                <div class="widget-header">
+                  <div>
+                    <h3 class="widget-title">National Citation Performance</h3>
+                    <p class="widget-subtitle">Average citation impact per country</p>
+                  </div>
+                  <div class="widget-actions">
+                    <button class="widget-action-btn" onclick="ChartManager.exportChartAsPNG('geoCountryCitations')"><i class="fa-solid fa-download"></i></button>
+                  </div>
+                </div>
+                <div class="chart-container">
+                  <canvas id="geoCountryCitations"></canvas>
+                </div>
+              </div>
+
+              <div class="widget">
+                <div class="widget-header">
+                  <div>
+                    <h3 class="widget-title">Regional Patent Indexes</h3>
+                    <p class="widget-subtitle">Core geographical metrics</p>
+                  </div>
+                </div>
+                <div class="table-container" style="max-height: 280px; overflow-y: auto;">
+                  <table class="custom-table" id="geoRankingsTable">
+                    <thead>
+                      <tr>
+                        <th>Rank</th>
+                        <th>Country</th>
+                        <th>Patents</th>
+                        <th>Citations</th>
+                        <th>Avg Citation</th>
+                        <th>Innovation Score</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- View 2: Country Comparison Mode (NEW) -->
+          <div id="geoCompareView" style="display: none;">
+            <div class="widget widget-full" style="min-height: auto; margin-bottom: 24px;">
+              <div style="display: flex; gap: 20px; align-items: center; flex-wrap: wrap;">
+                <h4 style="font-weight: 700; color: var(--text-primary);">Compare Regions:</h4>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                  <select id="compareCountryA" class="year-input" style="width: 180px; text-align: left; padding: 10px 14px; border-radius: 8px;"></select>
+                  <span style="font-weight: 700; color: var(--text-muted);">vs</span>
+                  <select id="compareCountryB" class="year-input" style="width: 180px; text-align: left; padding: 10px 14px; border-radius: 8px;"></select>
+                </div>
+              </div>
+            </div>
+
+            <div class="widget-grid">
+              <!-- Country comparison card specs -->
+              <div class="widget" style="min-height: 320px;">
+                <div class="widget-header">
+                  <h3 class="widget-title">Comparative Statistics</h3>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; flex-grow: 1;">
+                  <!-- Country A stats -->
+                  <div style="background-color: var(--border-light); padding: 16px; border-radius: 12px; display: flex; flex-direction: column; gap: 8px;">
+                    <h4 style="color: var(--color-primary); font-weight: 800;" id="compareTitleA">Country A</h4>
+                    <p style="font-size: 0.8rem; color: var(--text-muted);">Patents: <strong style="color: var(--text-primary);" id="comparePatentsA">--</strong></p>
+                    <p style="font-size: 0.8rem; color: var(--text-muted);">Avg Citations: <strong style="color: var(--text-primary);" id="compareCitationsA">--</strong></p>
+                    <p style="font-size: 0.8rem; color: var(--text-muted);">Innovation Index: <strong style="color: var(--text-primary);" id="compareScoreA">--</strong></p>
+                  </div>
+                  <!-- Country B stats -->
+                  <div style="background-color: var(--border-light); padding: 16px; border-radius: 12px; display: flex; flex-direction: column; gap: 8px;">
+                    <h4 style="color: var(--color-success); font-weight: 800;" id="compareTitleB">Country B</h4>
+                    <p style="font-size: 0.8rem; color: var(--text-muted);">Patents: <strong style="color: var(--text-primary);" id="comparePatentsB">--</strong></p>
+                    <p style="font-size: 0.8rem; color: var(--text-muted);">Avg Citations: <strong style="color: var(--text-primary);" id="compareCitationsB">--</strong></p>
+                    <p style="font-size: 0.8rem; color: var(--text-muted);">Innovation Index: <strong style="color: var(--text-primary);" id="compareScoreB">--</strong></p>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Comparative line chart -->
+              <div class="widget" style="min-height: 320px;">
+                <div class="widget-header">
+                  <h3 class="widget-title">Filing Growth Curves</h3>
+                  <div class="widget-actions">
+                    <button class="widget-action-btn" onclick="ChartManager.exportChartAsPNG('geoCompareChart')"><i class="fa-solid fa-download"></i></button>
+                  </div>
+                </div>
+                <div class="chart-container">
+                  <canvas id="geoCompareChart"></canvas>
+                </div>
+              </div>
+
+              <!-- Technology focus Comparison table -->
+              <div class="widget widget-full" style="min-height: auto;">
+                <div class="widget-header">
+                  <h3 class="widget-title">Technology Specialization Comparison</h3>
+                  <p class="widget-subtitle">Filings breakdown by tech domains for both countries</p>
+                </div>
+                <div class="table-container">
+                  <table class="custom-table" id="geoCompareTable">
+                    <thead>
+                      <tr>
+                        <th>Technology Domain</th>
+                        <th id="compareColHeaderA">Country A</th>
+                        <th id="compareColHeaderB">Country B</th>
+                        <th>Variance (A - B)</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==========================================
+             TAB 4: Applicant Intelligence (UPGRADED with McKinsey Matrix)
+             ========================================== -->
+        <div class="tab-content" id="applicantsTab">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">Applicant Intelligence</h2>
+              <p class="page-subtitle">Analysis of organizations, corporate market share, citation weight, and innovation scores.</p>
+            </div>
+          </div>
+
+          <div class="widget-grid">
+            <!-- Strategic McKinsey Bubble Matrix Widget -->
+            <div class="widget widget-full" style="min-height: 480px;">
+              <div class="widget-header">
+                <div>
+                  <h3 class="widget-title">Strategic Positioning Matrix</h3>
+                  <p class="widget-subtitle">Applicant Innovation Quadrants (Patent Count vs. Citation Impact. Bubble size represents Innovation Score)</p>
+                </div>
+                <div class="widget-actions">
+                  <button class="widget-action-btn" onclick="ChartManager.exportChartAsPNG('appStrategicMatrix')"><i class="fa-solid fa-download"></i></button>
+                </div>
+              </div>
+              <div class="chart-container" style="height: 380px;">
+                <canvas id="appStrategicMatrix"></canvas>
+              </div>
+            </div>
+
+            <div class="widget">
+              <div class="widget-header">
+                <div>
+                  <h3 class="widget-title">Corporate Citation Quality</h3>
+                  <p class="widget-subtitle">Average citations per patent (Min. 5 Patents)</p>
+                </div>
+                <div class="widget-actions">
+                  <button class="widget-action-btn" onclick="ChartManager.exportChartAsPNG('appCitationImpact')"><i class="fa-solid fa-download"></i></button>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas id="appCitationImpact"></canvas>
+              </div>
+            </div>
+
+            <div class="widget">
+              <div class="widget-header">
+                <div>
+                  <h3 class="widget-title">Applicant Growth Profiles</h3>
+                  <p class="widget-subtitle">Filings by key historical periods</p>
+                </div>
+                <div class="widget-actions">
+                  <button class="widget-action-btn" onclick="ChartManager.exportChartAsPNG('appGrowthTrend')"><i class="fa-solid fa-download"></i></button>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas id="appGrowthTrend"></canvas>
+              </div>
+            </div>
+
+            <div class="widget widget-full">
+              <div class="widget-header">
+                <div>
+                  <h3 class="widget-title">Global Innovator Leaderboard</h3>
+                  <p class="widget-subtitle">Sortable list containing WIPO applicant intelligence indexes</p>
+                </div>
+              </div>
+              <div class="table-container">
+                <table class="custom-table" id="applicantsLeaderboardTable">
+                  <thead>
+                    <tr>
+                      <th data-sort="rank">Rank <i class="fa-solid fa-sort"></i></th>
+                      <th data-sort="org">Organization <i class="fa-solid fa-sort"></i></th>
+                      <th data-sort="patents">Patents <i class="fa-solid fa-sort"></i></th>
+                      <th data-sort="citations">Citations <i class="fa-solid fa-sort"></i></th>
+                      <th data-sort="impact">Citation Impact <i class="fa-solid fa-sort"></i></th>
+                      <th data-sort="diversity">Domain Diversity <i class="fa-solid fa-sort"></i></th>
+                      <th data-sort="score">Innovation Score <i class="fa-solid fa-sort"></i></th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==========================================
+             TAB 5: Technology Intelligence
+             ========================================== -->
+        <div class="tab-content" id="technologyTab">
+          <div class="page-header">
+            <div>
+              <h2 class="page-title">Technology Intelligence</h2>
+              <p class="page-subtitle">IPC sub-class distributions, citation footprints, and technology domain specialization.</p>
+            </div>
+          </div>
+
+          <div class="widget-grid">
+            <div class="widget">
+              <div class="widget-header">
+                <div>
+                  <h3 class="widget-title">IPC Code Frequencies</h3>
+                  <p class="widget-subtitle">Major International Patent Classifications</p>
+                </div>
+                <div class="widget-actions">
+                  <button class="widget-action-btn" onclick="ChartManager.exportChartAsPNG('techIpcDist')"><i class="fa-solid fa-download"></i></button>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas id="techIpcDist"></canvas>
+              </div>
+            </div>
+
+            <div class="widget">
+              <div class="widget-header">
+                <div>
+                  <h3 class="widget-title">Technology Specialization Radar</h3>
+                  <p class="widget-subtitle">Co-occurrence weights of tech subdomains</p>
+                </div>
+                <div class="widget-actions">
+                  <button class="widget-action-btn" onclick="ChartManager.exportChartAsPNG('techDomainRadar')"><i class="fa-solid fa-download"></i></button>
+                </div>
+              </div>
+              <div class="chart-container">
+                <canvas id="techDomainRadar"></canvas>
+              </div>
+            </div>
+
+            <!-- Technology Specialization Insights Card -->
+            <div class="widget widget-full" style="min-height: auto;">
+              <div class="widget-header">
+                <div>
+                  <h3 class="widget-title">Technology Domain Strengths & Weaknesses</h3>
+                  <p class="widget-subtitle">Identified based on overall filing counts and citation quality</p>
+                </div>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 10px;">
+                <div style="background-color: var(--color-success-light); border-left: 5px solid var(--color-success); padding: 18px; border-radius: 8px;">
+                  <h4 style="color: var(--color-success); margin-bottom: 8px; font-weight: 700;"><i class="fa-solid fa-circle-up"></i> Top Technology Vectors</h4>
+                  <ul id="techStrengthsList" style="list-style: none; font-size: 0.88rem; line-height: 1.6; color: var(--text-secondary);"></ul>
+                </div>
+                <div style="background-color: var(--color-danger-light); border-left: 5px solid var(--color-danger); padding: 18px; border-radius: 8px;">
+                  <h4 style="color: var(--color-danger); margin-bottom: 8px; font-weight: 700;"><i class="fa-solid fa-circle-down"></i> Slower Growth Vectors</h4>
+                  <ul id="techWeaknessesList" style="list-style: none; font-size: 0.88rem; line-height: 1.6; color: var(--text-secondary);"></ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty state placeholder -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+          <i class="fa-regular fa-folder-open"></i>
+          <h4>No Patent Records Found</h4>
+          <p>No patents match your active filters or global search term. Reset your parameters and try again.</p>
+          <button class="action-btn btn-primary" style="margin-top: 16px;" onclick="document.getElementById('resetFiltersBtn').click()">
+            Reset All Filters
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div>
+        <span>Global Patent Intelligence Platform &copy; 2026. Made with WIPO & OECD Analytics Standards.</span>
+      </div>
+      <div>
+        <ul class="footer-links">
+          <li><a href="#about" onclick="alert('Patent analytics demonstration platform. Fully frontend driven.')">About</a></li>
+          <li><a href="#wipo" onclick="window.open('https://www.wipo.int', '_blank')">WIPO portal</a></li>
+          <li><a href="#privacy" onclick="alert('Confidential WIPO demonstration framework.')">System Status</a></li>
+        </ul>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ==========================================================================
+       Executive Innovation Report Modal overlay
+       ========================================================================== -->
+  <div class="modal-overlay" id="reportModal">
+    <div class="report-modal">
+      <div class="report-modal-header">
+        <h3>WIPO Executive Innovation Report</h3>
+        <button id="closeReportBtn"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="report-modal-body" id="reportPaperArea">
+        <div class="report-paper">
+          <!-- Title block -->
+          <div class="report-title-block">
+            <p class="report-subtitle-text">WIPO Patent Intelligence Services</p>
+            <h2 class="report-title-text">Executive Innovation & Patent Analysis</h2>
+            <div class="report-metadata">
+              <div><span>Target Scope: </span><span id="reportFilterText" style="font-weight: 700;">Global Portfolio</span></div>
+              <div><span>Release Date: </span><span id="reportDateText" style="font-weight: 700;">June 17, 2026</span></div>
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div class="report-grid-stats">
+            <div class="report-stat-box">
+              <p class="report-stat-label">Total Patents</p>
+              <h3 class="report-stat-value" id="repTotalPatents">0</h3>
+            </div>
+            <div class="report-stat-box">
+              <p class="report-stat-label">Leading Region</p>
+              <h3 class="report-stat-value" id="repLeadingCountry">--</h3>
+            </div>
+            <div class="report-stat-box">
+              <p class="report-stat-label">Leading Applicant</p>
+              <h3 class="report-stat-value" id="repLeadingApp">--</h3>
+            </div>
+            <div class="report-stat-box">
+              <p class="report-stat-label">Fastest Growth Sector</p>
+              <h3 class="report-stat-value" id="repFastestTech">--</h3>
+            </div>
+          </div>
+
+          <div class="report-columns">
+            <!-- Strategic Insights -->
+            <div>
+              <h4 class="report-section-title">Core Intelligence Insights</h4>
+              <div id="repInsightsContainer"></div>
+            </div>
+
+            <!-- Summary Standings -->
+            <div>
+              <h4 class="report-section-title">Leading Innovators Standings</h4>
+              <table class="report-table" id="repStandingsTable">
+                <thead>
+                  <tr>
+                    <th>Rank</th>
+                    <th>Applicant</th>
+                    <th>Patents</th>
+                    <th>Citations</th>
+                    <th>Innovation Score</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div style="border-top: 1px solid #cbd5e1; padding-top: 10px; font-size: 0.65rem; color: #64748b; text-align: center; display: flex; justify-content: space-between;">
+            <span>Report generated via WIPO Patent Analytics Tool.</span>
+            <span>RESTRICTED USE - CONFIDENTIALITY APPLIES</span>
+          </div>
+        </div>
+      </div>
+      <div class="report-modal-footer">
+        <button class="action-btn" id="closeReportBtnSecondary">Cancel</button>
+        <button class="action-btn btn-primary" id="downloadReportPdfBtn"><i class="fa-solid fa-download"></i> Download Report PDF</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Core Controller Scripts -->
+  <script src="js/dataGenerator.js"></script>
+  <script src="js/insights.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

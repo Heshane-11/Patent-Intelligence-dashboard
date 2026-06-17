@@ -1,5 +1,7 @@
 # Global Patent Intelligence Platform
 
+**🔗 Live Demo:** [https://patent-intelligence-dashboard.vercel.app/](https://patent-intelligence-dashboard.vercel.app/)
+
 A high-performance, enterprise-grade innovation analytics dashboard inspired by **WIPO, OECD, USPTO,** and **World Bank** data explorer portals. This platform delivers deep analytical insights into global patenting trends, geographic distributions, organizational performance, and technological specializations from 2015 to 2025.
 
 ---

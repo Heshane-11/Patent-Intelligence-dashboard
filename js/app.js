@@ -446,7 +446,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById(`${state.activeTab}Tab`).classList.add("active");
 
     if (state.activeTab === "overview") {
-      renderAIInsights(filtered);
+      renderPatentInsights(filtered);
       ChartManager.renderFilingTrends(filtered);
       ChartManager.renderCountryDistribution(filtered);
       ChartManager.renderStatusBreakdown(filtered);
@@ -478,7 +478,7 @@ document.addEventListener("DOMContentLoaded", () => {
   /* ==========================================================================
      Tab Sub-Component Generators (DocumentFragments Optimized)
      ========================================================================== */
-  function renderAIInsights(filtered) {
+  function renderPatentInsights(filtered) {
     const list = elements.aiInsightsList;
     list.innerHTML = "";
     const insights = InsightsEngine.generateInsights(filtered, state.allPatents.length);

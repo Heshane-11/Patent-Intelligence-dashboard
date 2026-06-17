@@ -197,7 +197,7 @@ const InsightsEngine = (() => {
   }
 
   /**
-   * Generate rule-based AI insights dynamically based on the filtered data
+   * Generate rule-based patent intelligence insights dynamically based on the filtered data
    */
   function generateInsights(filteredData, totalRawCount) {
     const insights = [];
